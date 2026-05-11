@@ -11,3 +11,6 @@ LazyData: true
 RoxygenNote: 7.3.3
 URL: https://github.com/lucialopezgarcia/triangdist
 BugReports: https://github.com/lucialopezgarcia/triangdist/issues
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

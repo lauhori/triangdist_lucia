@@ -1,72 +1,66 @@
+#' Triangular Distribution Density
+#' @param x Vector of quantiles
+#' @param min Lower limit
+#' @param max Upper limit
+#' @param mode Mode
+#' @return Density values
 #' @export
 dtriang <- function(x, min, max, mode) {
-  if (min > max) stop("El minimo no puede ser mayor que el maximo")
-  if (mode < min || mode > max) stop("La moda debe estar entre min y max")
+  if (any(min > max)) stop("min must be less than max")
+  if (any(mode < min | mode > max)) stop("mode must be between min and max")
 
-  #un vector de ceros del mismo tamaño que x
-  resultado <- rep(0, length(x))
-
-  #altura h
   h <- 2 / (max - min)
 
-  for (i in 1:length(x)) {
-    cur_x <- x[i]
-
-    if (cur_x >= min && cur_x < mode) {
-      resultado[i] <- (2 * (cur_x - min)) / ((max - min) * (mode - min))
-    } else if (cur_x == mode) {
-      resultado[i] <- h
-    } else if (cur_x > mode && cur_x <= max) {
-      resultado[i] <- (2 * (max - cur_x)) / ((max - min) * (max - mode))
-    }
-  }
-
-  return(resultado)
+  # Usamos ifelse para vectorización completa
+  dens <- ifelse(x < min | x > max, 0,
+                 ifelse(x <= mode, (2 * (x - min)) / ((max - min) * (mode - min)),
+                        (2 * (max - x)) / ((max - min) * (max - mode))))
+  dens
 }
 
+#' Triangular Distribution Function
+#' @param q Vector of quantiles
+#' @param min Lower limit
+#' @param max Upper limit
+#' @param mode Mode
+#' @return Cumulative probabilities
 #' @export
 ptriang <- function(q, min, max, mode) {
-  if (min > max) stop("Error en los limites")
+  if (any(min > max)) stop("min must be less than max")
 
-  prob <- rep(0, length(q))
-
-  for (i in 1:length(q)) {
-    cur_q <- q[i]
-
-    if (cur_q < min) {
-      prob[i] <- 0
-    } else if (cur_q >= min && cur_q < mode) {
-      prob[i] <- (cur_q - min)^2 / ((max - min) * (mode - min))
-    } else if (cur_q >= mode && cur_q <= max) {
-      prob[i] <- 1 - (max - cur_q)^2 / ((max - min) * (max - mode))
-    } else {
-      prob[i] <- 1
-    }
-  }
-  return(prob)
+  prob <- ifelse(q < min, 0,
+                 ifelse(q < mode, (q - min)^2 / ((max - min) * (mode - min)),
+                        ifelse(q <= max, 1 - (max - q)^2 / ((max - min) * (max - mode)), 1)))
+  prob
 }
 
+#' Triangular Quantile Function
+#' @param p Vector of probabilities
+#' @param min Lower limit
+#' @param max Upper limit
+#' @param mode Mode
+#' @return Quantiles
 #' @export
 qtriang <- function(p, min, max, mode) {
-  if (any(p < 0 | p > 1)) stop("La probabilidad p debe estar entre 0 y 1")
+  if (any(p < 0 | p > 1)) stop("p must be between 0 and 1")
 
-  # Punto de corte en la probabilidad
   p_corte <- (mode - min) / (max - min)
-  cuantil <- rep(0, length(p))
 
-  for (i in 1:length(p)) {
-    if (p[i] < p_corte) {
-      cuantil[i] <- min + sqrt(p[i] * (max - min) * (mode - min))
-    } else {
-      cuantil[i] <- max - sqrt((1 - p[i]) * (max - min) * (max - mode))
-    }
-  }
-  return(cuantil)
+  cuantil <- ifelse(p < p_corte,
+                    min + sqrt(p * (max - min) * (mode - min)),
+                    max - sqrt((1 - p) * (max - min) * (max - mode)))
+  cuantil
 }
 
+#' Random Generation for Triangular Distribution
+#' @param n Number of observations
+#' @param min Lower limit
+#' @param max Upper limit
+#' @param mode Mode
+#' @return Random variates
 #' @export
 rtriang <- function(n, min, max, mode) {
-
+  # Implementación mediante el método de inversión [cite: 75, 77]
   u <- runif(n)
-  return(qtriang(u, min, max, mode))
+  qtriang(u, min, max, mode)
 }
